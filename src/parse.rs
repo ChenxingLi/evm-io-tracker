@@ -1,3 +1,5 @@
+use crate::BlockAccess;
+
 use super::DBAccess;
 
 use super::opcode::{integrity_check, pop_num};
@@ -10,8 +12,8 @@ use ethers::{
     },
 };
 
-pub async fn parse_block_trace(provider: Provider<Http>, number: usize) -> Vec<DBAccess> {
-    let mut accesses = Vec::new();
+pub async fn parse_block_trace(provider: Provider<Http>, number: usize) -> BlockAccess {
+    let mut block_accesses = Vec::new();
     let answer = provider
         .trace_replay_block_transactions(
             BlockNumber::Number(number.into()),
@@ -35,10 +37,12 @@ pub async fn parse_block_trace(provider: Provider<Http>, number: usize) -> Vec<D
             _ => unreachable!(),
         };
         if let Some(trace) = &trace.vm_trace {
-            parse_trace(trace, contract, &mut accesses)
+            let mut transaction_access = Vec::new();
+            parse_trace(trace, contract, &mut transaction_access);
+            block_accesses.push(transaction_access);
         }
     }
-    accesses
+    block_accesses
 }
 
 fn parse_trace(trace: &VMTrace, contract: Address, accesses: &mut Vec<DBAccess>) {
@@ -70,13 +74,14 @@ fn parse_trace(trace: &VMTrace, contract: Address, accesses: &mut Vec<DBAccess>)
         };
 
         if let Some(sub_trace) = &op.sub {
-            let next_contract = match opcode {
-                CALL | STATICCALL => u256_to_address(peek(2)),
-                CALLCODE | DELEGATECALL => contract.clone(),
-                CREATE | CREATE2 => u256_to_address(&single_return()),
-                _ => unreachable!(),
-            };
-            parse_trace(sub_trace, next_contract, accesses)
+            if let Some(next_contract) = match opcode {
+                CALL | STATICCALL => Some(u256_to_address(peek(2))),
+                CALLCODE | DELEGATECALL => Some(contract.clone()),
+                CREATE | CREATE2 => Some(u256_to_address(&single_return())),
+                _ => None,
+            } {
+                parse_trace(sub_trace, next_contract, accesses);
+            }
         }
 
         let maybe_access = match &opcode {

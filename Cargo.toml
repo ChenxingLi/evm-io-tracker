@@ -1,5 +1,5 @@
 [package]
-name = "amt-trace"
+name = "evm-io-tracker"
 version = "0.1.0"
 edition = "2021"
 
@@ -12,3 +12,5 @@ rand = "*"
 tokio = { version = "1", features = ["full"] }
 serde = "1"
 postcard = { version = "1.0.2", features = ["use-std"] }
+structopt = { version = "0.3", default-features = false }
+regex = "*"

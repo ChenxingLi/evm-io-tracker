@@ -101,7 +101,7 @@ async fn fetch_main(opts: &FetchOptions) {
 }
 
 fn combine(opts: &CombineOptions) {
-    let re = Regex::new(r"(\d+)_(\d+)\.trace").unwrap();
+    let re = Regex::new(r"^(\d+)_(\d+)\.trace$").unwrap();
     let mut pathes: Vec<_> = fs::read_dir("data")
         .unwrap()
         .filter_map(Result::ok)

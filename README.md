@@ -52,18 +52,20 @@ To build the project on Ubuntu 22.04, follow these steps:
     ```
     cargo build --release
     ```
-    
-7. Fetch traces from an Ethereum node:
-    
-    To fetch traces from an Ethereum archive node, run the following command:
-    
+
+## Fetching and Parsing Traces
+
+Now you can fetch traces from an Ethereum archive node and generate task files for [Authenticated Storage Benchmarks](https://github.com/ChenxingLi/authenticated-storage-benchmarks). 
+
+1. Fetch traces from an Ethereum node:
+        
     ```
     ./target/release/evm-io-tracker fetch --node-url <node-url> --start-block <block-number> --batch-size <batch-size>
     ```
     
     The `fetch` command fetches traces from an Ethereum archive node that supports the [trace API](https://openethereum.github.io/JSONRPC-trace-module). To use this command, you must provide the following arguments:
     
-    - `node-url`: The URL of an Ethereum archive node that supports the trace API. You can use an archive node that supports OpenEthereum's trace API, or purchase an API service like [QuickNode](https://www.quicknode.com/docs/ethereum/trace_replayBlockTransactions).
+    - `node-url`: The URL of an Ethereum archive node that supports the trace API. You can use an archive node that supports [OpenEthereum's trace API](https://openethereum.github.io/JSONRPC-trace-module), or purchase an API service like [QuickNode](https://www.quicknode.com/docs/ethereum/trace_replayBlockTransactions).
     - `start-block`: The block number of the first block to fetch. This is the block from which the tracing will start.
     
     Additionally, you can specify an optional argument:
@@ -83,10 +85,8 @@ To build the project on Ubuntu 22.04, follow these steps:
     
     The fetched traces will be saved in the `./data` folder.
     
-8. Combine fetched data:
-    
-    To combine the fetched data into one file, run the following command:
-    
+2. Combine fetched data:
+        
     ```bash
     ./target/release/evm-io-tracker combine --start-block <number> --end-block <number> --path <dir-path>
     ```
@@ -100,10 +100,8 @@ To build the project on Ubuntu 22.04, follow these steps:
     
     Additionally, you can specify the output directory for the combined file using the `path` option. If this option is not specified, the file will be placed in the `./data` directory.
     
-9. Generating the task file for Authenticated Storage Benchmarks:
-    
-    To generate the task file for Authenticated Storage Benchmarks, run the following command:
-    
+3. Generating the task file for Authenticated Storage Benchmarks:
+        
     ```
     ./target/release/evm-io-tracker seal --input <file-path> --output <dir-path>
     ```

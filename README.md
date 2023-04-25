@@ -98,7 +98,7 @@ Now you can fetch traces from an Ethereum archive node and generate task files f
     - `start-block` (optional): The block number to start with. Any blocks with a number lower than this value will be excluded. If not specified, all blocks from the beginning of the fetched data will be included.
     - `end-block` (optional): The block number to end with. Any blocks with a number higher than this value will be excluded. If not specified, all blocks up to the end of the fetched data will be included.
     
-    Additionally, you can specify the output directory for the combined file using the `path` option. If this option is not specified, the file will be placed in the `./data` directory.
+    Additionally, you can specify the input and output directory for the files using the `path` option. If this option is not specified, the working directory will be `./data`.
     
 3. Generating the task file for Authenticated Storage Benchmarks:
         

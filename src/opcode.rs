@@ -75,34 +75,83 @@ pub fn pop_num(op: &Opcode) -> usize {
     }
 }
 
-pub fn integrity_check(op: &VMOperation, stack: &[U256]) {
+pub fn integrity_check(op: &VMOperation, stack: &[U256], block_number: usize) {
     use Opcode::*;
     let opcode = if let ExecutedInstruction::Known(o) = &op.op {
         o.clone()
     } else {
         return;
     };
-    if let ADD | SUB | MUL | DIV = opcode {
-    } else {
-        return;
-    }
-    let a = stack[stack.len() - 1];
-    let b = stack[stack.len() - 2];
-    let expected = match &opcode {
-        ADD => a.overflowing_add(b).0,
-        SUB => a.overflowing_sub(b).0,
-        MUL => a.overflowing_mul(b).0,
-        DIV => {
-            if b.is_zero() {
-                U256::zero()
-            } else {
-                a.div(b)
+    let bool_to_u256 = |b| if b { U256::one() } else { U256::zero() };
+    if let ADD | SUB | MUL | DIV | AND | OR | XOR | EQ | LT | GT | EXP = opcode {
+        let a = stack[stack.len() - 1];
+        let b = stack[stack.len() - 2];
+        let expected = match &opcode {
+            ADD => a.overflowing_add(b).0,
+            SUB => a.overflowing_sub(b).0,
+            MUL => a.overflowing_mul(b).0,
+            DIV => {
+                if b.is_zero() {
+                    U256::zero()
+                } else {
+                    a.div(b)
+                }
             }
-        }
-        _ => {
-            return;
-        }
-    };
-    let real = op.ex.as_ref().unwrap().push.first().unwrap();
-    assert_eq!(&expected, real, "Integrity check fail");
+            AND => a & b,
+            OR => a | b,
+            XOR => a ^ b,
+            EQ => bool_to_u256(a == b),
+            LT => bool_to_u256(a < b),
+            GT => bool_to_u256(a > b),
+            EXP => a.overflowing_pow(b).0,
+            _ => unreachable!(),
+        };
+        let real = op.ex.as_ref().unwrap().push.first().unwrap();
+        assert_eq!(
+            &expected, real,
+            "Integrity check fail at {}: Op {:?}",
+            block_number, opcode
+        );
+    } else if SWAP1 as u8 <= opcode as u8 && opcode as u8 <= SWAP16 as u8 {
+        let depth = ((opcode as u8 - SWAP1 as u8) + 2) as usize;
+        let poped = &stack[stack.len() - depth..];
+        let pushed = &op.ex.as_ref().unwrap().push[..];
+        assert_eq!(
+            pushed[0],
+            poped[depth - 1],
+            "Integrity check fail at {}: Op {:?}",
+            block_number,
+            opcode
+        );
+        assert_eq!(
+            pushed[depth - 1],
+            poped[0],
+            "Integrity check fail at {}: Op {:?}",
+            block_number,
+            opcode
+        );
+        assert_eq!(
+            pushed[1..depth - 1],
+            poped[1..depth - 1],
+            "Integrity check fail at {}: Op {:?}",
+            block_number,
+            opcode
+        );
+    } else if DUP1 as u8 <= opcode as u8 && opcode as u8 <= DUP16 as u8 {
+        let depth = ((opcode as u8 - DUP1 as u8) + 1) as usize;
+        let poped = &stack[stack.len() - depth..];
+        let pushed = &op.ex.as_ref().unwrap().push[..];
+        assert_eq!(
+            pushed[depth], poped[0],
+            "Integrity check fail at {}: Op {:?}",
+            block_number, opcode
+        );
+        assert_eq!(
+            pushed[0..depth],
+            poped[0..depth],
+            "Integrity check fail at {}: Op {:?}",
+            block_number,
+            opcode
+        );
+    }
 }

@@ -38,14 +38,19 @@ pub async fn parse_block_trace(provider: Provider<Http>, number: usize) -> Block
         };
         if let Some(trace) = &trace.vm_trace {
             let mut transaction_access = Vec::new();
-            parse_trace(trace, contract, &mut transaction_access);
+            parse_trace(trace, contract, &mut transaction_access, number);
             block_accesses.push(transaction_access);
         }
     }
     block_accesses
 }
 
-fn parse_trace(trace: &VMTrace, contract: Address, accesses: &mut Vec<DBAccess>) {
+fn parse_trace(
+    trace: &VMTrace,
+    contract: Address,
+    accesses: &mut Vec<DBAccess>,
+    block_number: usize,
+) {
     use Opcode::*;
     let mut stack: Vec<U256> = vec![];
 
@@ -58,10 +63,11 @@ fn parse_trace(trace: &VMTrace, contract: Address, accesses: &mut Vec<DBAccess>)
                 INVALID
             }
         };
-        integrity_check(op, &stack);
+        // println!("stack {:?}", &stack);
+        // println!("op {:?}", op);
+        integrity_check(op, &stack, block_number);
 
         let peek = |x: usize| &stack[stack.len() - x];
-        // println!("{:?}", op.op);
 
         let single_return = || {
             op.ex
@@ -80,7 +86,7 @@ fn parse_trace(trace: &VMTrace, contract: Address, accesses: &mut Vec<DBAccess>)
                 CREATE | CREATE2 => Some(u256_to_address(&single_return())),
                 _ => None,
             } {
-                parse_trace(sub_trace, next_contract, accesses);
+                parse_trace(sub_trace, next_contract, accesses, block_number);
             }
         }
 
@@ -107,7 +113,20 @@ fn parse_trace(trace: &VMTrace, contract: Address, accesses: &mut Vec<DBAccess>)
         }
 
         stack.truncate(stack.len() - pop_num(&opcode));
-        stack.extend(op.ex.as_ref().map_or(&vec![], |x| &x.push));
+        let pushed = op.ex.as_ref().map(|x| &x.push);
+        stack.extend(pushed.unwrap_or(&vec![]));
+
+        if pushed.map_or(true, Vec::is_empty)
+            && matches!(
+                &op.op,
+                ExecutedInstruction::Known(
+                    CALL | CALLCODE | DELEGATECALL | STATICCALL | CREATE | CREATE2
+                )
+            )
+        {
+            // println!("Incorrect return of {:?}", &op.op);
+            stack.push(U256::zero());
+        }
 
         // println!("{:?}\n", stack);
     }

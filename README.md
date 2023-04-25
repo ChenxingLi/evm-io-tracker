@@ -65,7 +65,7 @@ Now you can fetch traces from an Ethereum archive node and generate task files f
     
     The `fetch` command fetches traces from an Ethereum archive node that supports the [trace API](https://openethereum.github.io/JSONRPC-trace-module). To use this command, you must provide the following arguments:
     
-    - `node-url`: The URL of an Ethereum archive node that supports the trace API. You can use an archive node that supports [OpenEthereum's trace API](https://openethereum.github.io/JSONRPC-trace-module), or purchase an API service like [QuickNode](https://www.quicknode.com/docs/ethereum/trace_replayBlockTransactions).
+    - `node-url`: The URL of an Ethereum archive node that supports the trace API. You can use an archive node that supports [OpenEthereum's trace API](https://openethereum.github.io/JSONRPC-trace-module), or purchase a full node API service supporting trace API like [QuickNode](https://www.quicknode.com?tap_a=67226-09396e&tap_s=3826823-76f362&utm_source=affiliate&utm_campaign=generic&utm_content=affiliate_landing_page&utm_medium=generic).
     - `start-block`: The block number of the first block to fetch. This is the block from which the tracing will start.
     
     Additionally, you can specify an optional argument:
